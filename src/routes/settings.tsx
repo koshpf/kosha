@@ -354,8 +354,8 @@ function SettingsPage() {
         </Card>
 
         <p className="px-1 text-xs text-subtle">
-          This is local-first: your ledger stays on the phone. A backup file is the portable copy —
-          not a login. Figures are for personal tracking, not investment advice.
+          This is local-first: your ledger stays on this phone or desktop browser. A backup file is
+          the portable copy — not a login. Figures are for personal tracking, not investment advice.
         </p>
       </div>
     </AppShell>
