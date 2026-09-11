@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
-import { AssetCompare } from "@/components/asset-compare";
 import { EarnStrip, SupportCard } from "@/components/earn-cta";
 import { Hidden } from "@/components/hide-amounts";
 import { SnapshotShare } from "@/components/snapshot-share";
@@ -80,7 +79,6 @@ function Dashboard() {
           <>
             <PriceTicker market={market} refreshing={busy} onRefresh={() => void onRefresh()} />
             <NetWorthCards totals={totals} market={market} showUsd={showUsd} />
-            <AssetCompare market={market} />
             <UnitInsightCard history={history} />
             {vaults.length > 1 ? <FamilyTotals vaults={vaults} market={market} /> : null}
             <SnapshotShare totals={totals} history={history} vaultName={activeVault?.name} />
