@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FALLBACK_MARKET } from "@/lib/fallback-prices";
@@ -65,7 +65,10 @@ export function LiveNavBox({
   avgPrice: string;
   purity?: GoldPurity;
 }) {
-  const target = quoteTarget(type, ticker, exchange);
+  const target = useMemo(
+    () => quoteTarget(type, ticker, exchange),
+    [type, ticker, exchange],
+  );
   const lastPrices = usePortfolio((s) => s.lastPrices);
   const setPrices = usePortfolio((s) => s.setPrices);
   const market = lastPrices ?? FALLBACK_MARKET;
@@ -81,15 +84,26 @@ export function LiveNavBox({
     },
   });
 
+  const storeKey = target?.storeKey;
+  const kind = target?.kind;
+
   useEffect(() => {
-    if (!query.data || !target || target.kind === "gold") return;
+    if (!query.data || !storeKey || kind === "gold") return;
     const prev = usePortfolio.getState().lastPrices ?? FALLBACK_MARKET;
+    const existing = prev.quotes[storeKey];
+    if (
+      existing &&
+      existing.price === query.data.price &&
+      existing.currency === query.data.currency
+    ) {
+      return;
+    }
     setPrices({
       ...prev,
       asOf: Date.now(),
-      quotes: { ...prev.quotes, [target.storeKey]: query.data },
+      quotes: { ...prev.quotes, [storeKey]: query.data },
     });
-  }, [query.data, setPrices, target]);
+  }, [query.data, setPrices, storeKey, kind]);
 
   const isNav = type === "indian_mf" || type === "ulip";
   const label = isNav ? "Current NAV" : type === "physical_gold" ? "Current ₹ / gram" : "Current price";
