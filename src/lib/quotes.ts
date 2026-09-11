@@ -106,17 +106,36 @@ function mcxGoldExpiryDates(): string[] {
   return out.slice(0, 3);
 }
 
+/** MCX gold is usually ₹ / 10g. Accept kg or per-gram if the feed changes. */
+function mcxToPerGram24k(n: number): number | null {
+  if (!Number.isFinite(n) || n <= 0) return null;
+  if (n >= 80_000 && n <= 450_000) return n / 10;
+  if (n >= 800_000 && n <= 4_500_000) return n / 1000;
+  if (n >= 8_000 && n <= 45_000) return n;
+  return null;
+}
+
+let goldMemo: { at: number; perGram: number } | null = null;
+const GOLD_MEMO_MS = 10 * 60_000;
+
 async function fetchIndiaGoldPerGram24k(): Promise<number | null> {
-  const jobs = mcxGoldExpiryDates().map((expiry) => async () => {
-    const data = await fetchJson<{ data?: { lastPrice?: string; prevClose?: string } }>(
-      `https://priceapi.moneycontrol.com/pricefeed/mcx/commodityfutures/GOLD?expiry=${expiry}`,
-      2500,
-    );
-    const n = Number(data.data?.lastPrice || data.data?.prevClose);
-    if (!Number.isFinite(n) || n < 80_000 || n > 400_000) throw new Error("bad mcx gold");
-    return n / 10;
-  });
-  return firstOk(jobs);
+  if (goldMemo && Date.now() - goldMemo.at < GOLD_MEMO_MS) return goldMemo.perGram;
+  for (const expiry of mcxGoldExpiryDates()) {
+    try {
+      const data = await fetchJson<{ data?: { lastPrice?: string; prevClose?: string } }>(
+        `https://priceapi.moneycontrol.com/pricefeed/mcx/commodityfutures/GOLD?expiry=${expiry}`,
+        2500,
+      );
+      const perGram = mcxToPerGram24k(Number(data.data?.lastPrice || data.data?.prevClose));
+      if (perGram) {
+        goldMemo = { at: Date.now(), perGram };
+        return perGram;
+      }
+    } catch {
+      /* next expiry */
+    }
+  }
+  return goldMemo?.perGram ?? null;
 }
 
 async function fetchGoldUsdPerOz(): Promise<number | null> {
@@ -324,13 +343,19 @@ export const fetchMarketQuotes = createServerFn({ method: "POST" })
 
     let goldUsdPerGram = FALLBACK_MARKET.goldUsdPerGram;
     let goldInrPerGram24k = FALLBACK_MARKET.goldInrPerGram24k;
-    const goldLive = indiaGold != null || goldOz != null;
+    let goldLive = false;
     if (indiaGold) {
       goldInrPerGram24k = indiaGold;
       goldUsdPerGram = usdInr > 0 ? indiaGold / usdInr : goldUsdPerGram;
+      goldLive = true;
     } else if (goldOz) {
       goldUsdPerGram = goldOz / 31.1034768;
-      goldInrPerGram24k = goldUsdPerGram * usdInr * 1.14;
+      goldInrPerGram24k = goldUsdPerGram * usdInr;
+      goldLive = true;
+    } else if (goldMemo?.perGram) {
+      goldInrPerGram24k = goldMemo.perGram;
+      goldUsdPerGram = usdInr > 0 ? goldMemo.perGram / usdInr : goldUsdPerGram;
+      goldLive = true;
     }
 
     const btcUsd = btcUsdLive ?? FALLBACK_MARKET.btcUsd;

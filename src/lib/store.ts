@@ -9,6 +9,7 @@ import {
   type MemberRole,
   type MemberVault,
 } from "@/lib/member-vaults";
+import { mergeMarketQuotes } from "@/lib/market-merge";
 import { SAMPLE_HOLDINGS } from "@/lib/sample-holdings";
 import type { Holding, HistoryPoint, MarketQuotes } from "@/lib/types";
 import { normalizeHolding } from "@/lib/types";
@@ -107,10 +108,7 @@ export const usePortfolio = create<PortfolioState>()(
       },
       setPrices: (prices) =>
         set({
-          lastPrices: {
-            ...prices,
-            quotes: { ...(get().lastPrices?.quotes ?? {}), ...prices.quotes },
-          },
+          lastPrices: mergeMarketQuotes(get().lastPrices, prices),
         }),
       setHistory: (history) => {
         const s = get();

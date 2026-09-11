@@ -83,7 +83,21 @@ export function useRefreshPrices() {
         ]),
         symbols.mf.length ? fetchMfQuotes({ data: { mf: symbols.mf } }).catch(() => ({})) : {},
       ]);
-      const data = raced ?? { ...FALLBACK_MARKET, asOf: Date.now() };
+      const data = raced;
+      if (!data) {
+        const prev = usePortfolio.getState().lastPrices;
+        if (prev) {
+          if (mf && Object.keys(mf).length) {
+            setPrices({ ...prev, asOf: Date.now(), quotes: { ...prev.quotes, ...mf } });
+            syncHistoryFromTotals();
+          }
+          return prev;
+        }
+        const fallback = { ...FALLBACK_MARKET, asOf: Date.now() };
+        setPrices(fallback);
+        syncHistoryFromTotals();
+        return fallback;
+      }
       setPrices({
         ...data,
         asOf: Date.now(),
@@ -92,6 +106,8 @@ export function useRefreshPrices() {
       syncHistoryFromTotals();
       return data;
     } catch {
+      const prev = usePortfolio.getState().lastPrices;
+      if (prev) return prev;
       const data = { ...FALLBACK_MARKET, asOf: Date.now() };
       setPrices(data);
       syncHistoryFromTotals();
