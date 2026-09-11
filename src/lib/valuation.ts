@@ -169,8 +169,8 @@ export function seedHistory(
     const date = new Date();
     date.setHours(18, 0, 0, 0);
     date.setDate(date.getDate() - i);
-    const goldOff = 1 + Math.sin(i / 9) * 0.015;
-    const btcOff = 1 + Math.sin(i / 7 + 1.2) * 0.04;
+    const goldOff = 1 + t * 0.11 + Math.sin(i / 9) * 0.012;
+    const btcOff = 1 - t * 0.06 + Math.sin(i / 7 + 1.2) * 0.04;
     points.push({
       date: todayKey(date),
       inr,

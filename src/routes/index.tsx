@@ -2,8 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
-import { EarnStrip, ShareNetWorthButton, SupportCard } from "@/components/earn-cta";
-import { Hidden, useHideAmounts } from "@/components/hide-amounts";
+import { EarnStrip, SupportCard } from "@/components/earn-cta";
+import { Hidden } from "@/components/hide-amounts";
+import { SnapshotShare } from "@/components/snapshot-share";
+import { UnitInsightCard } from "@/components/unit-insight";
 import { NetWorthCards } from "@/components/net-worth-cards";
 import { PnlText } from "@/components/pnl";
 import { PriceTicker } from "@/components/price-ticker";
@@ -34,7 +36,6 @@ function Dashboard() {
   const vaults = usePortfolio((s) => s.vaults);
   const activeVaultId = usePortfolio((s) => s.activeVaultId);
   const activeVault = vaults.find((row) => row.id === activeVaultId) ?? vaults[0];
-  const hideAmounts = useHideAmounts();
   const refresh = useRefreshPrices();
   const [busy, setBusy] = useState(false);
 
@@ -78,12 +79,9 @@ function Dashboard() {
           <>
             <PriceTicker market={market} refreshing={busy} onRefresh={() => void onRefresh()} />
             <NetWorthCards totals={totals} market={market} showUsd={showUsd} />
+            <UnitInsightCard history={history} />
             {vaults.length > 1 ? <FamilyTotals vaults={vaults} market={market} /> : null}
-            {hideAmounts ? null : (
-              <div className="flex flex-wrap gap-2">
-                <ShareNetWorthButton totals={totals} />
-              </div>
-            )}
+            <SnapshotShare totals={totals} history={history} vaultName={activeVault?.name} />
             <SupportCard />
             <EarnStrip />
             <p className="text-xs text-subtle">
