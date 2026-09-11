@@ -1,4 +1,3 @@
-import { FALLBACK_MARKET } from "@/lib/fallback-prices";
 import { inrPerFx } from "@/lib/fx";
 import { todayKey } from "@/lib/format";
 import { mfCode, mfQuoteKey, ulipCode, yahooSymbol } from "@/lib/symbols";
@@ -150,35 +149,17 @@ export function allocationByType(
     .sort((a, b) => b.value - a.value);
 }
 
-export function seedHistory(
-  currentInr: number,
-  market: MarketQuotes,
-  days = 60,
-): HistoryPoint[] {
-  const goldPx = market.goldInrPerGram24k || FALLBACK_MARKET.goldInrPerGram24k;
-  const btcPx = market.btcInr || FALLBACK_MARKET.btcInr;
-  const points: HistoryPoint[] = [];
-  const start = currentInr * 0.86;
-  for (let i = days; i >= 0; i -= 1) {
-    const t = (days - i) / days;
-    const wave = Math.sin(i / 5.5) * 0.012 + Math.sin(i / 13) * 0.008;
-    const drift = t * 0.14;
-    const wobble = ((i * 17) % 10) / 10 * 0.01 - 0.005;
-    let inr = start * (1 + drift + wave + wobble);
-    if (i === 0) inr = currentInr;
-    const date = new Date();
-    date.setHours(18, 0, 0, 0);
-    date.setDate(date.getDate() - i);
-    const goldOff = 1 + t * 0.11 + Math.sin(i / 9) * 0.012;
-    const btcOff = 1 - t * 0.06 + Math.sin(i / 7 + 1.2) * 0.04;
-    points.push({
-      date: todayKey(date),
-      inr,
-      goldG: inr / (goldPx * goldOff),
-      btc: inr / (btcPx * btcOff),
-    });
-  }
-  return points;
+export function firstHoldingDate(holdings: Holding[]): string | null {
+  if (holdings.length === 0) return null;
+  const ts = Math.min(...holdings.map((row) => row.createdAt || Date.now()));
+  return todayKey(new Date(ts));
+}
+
+function previousDate(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(y ?? 0, (m ?? 1) - 1, d ?? 1);
+  dt.setDate(dt.getDate() - 1);
+  return todayKey(dt);
 }
 
 export function upsertTodaySnapshot(
@@ -195,6 +176,21 @@ export function upsertTodaySnapshot(
   const without = history.filter((row) => row.date !== date);
   const next = [...without, point].sort((a, b) => a.date.localeCompare(b.date));
   return next.slice(-180);
+}
+
+/** Keep only days on/after the first holding. Invented backfill is dropped. */
+export function realHistory(
+  history: HistoryPoint[],
+  holdings: Holding[],
+  totals: PortfolioTotals,
+): HistoryPoint[] {
+  const start = firstHoldingDate(holdings);
+  if (!start) return [];
+  const kept = history.filter((row) => row.date >= start);
+  const withToday = upsertTodaySnapshot(kept, totals);
+  const origin = previousDate(start);
+  if (withToday.some((row) => row.date <= origin)) return withToday;
+  return [{ date: origin, inr: 0, goldG: 0, btc: 0 }, ...withToday].slice(-180);
 }
 
 export function yesterdayPoint(history: HistoryPoint[]): HistoryPoint | undefined {

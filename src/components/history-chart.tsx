@@ -81,7 +81,7 @@ export const HistoryChart = memo(function HistoryChart({ history }: { history: H
       <CardContent>
         {history.length < 1 ? (
           <p className="flex h-56 items-center text-sm text-muted-foreground">
-            History appears after the first price refresh.
+            History starts the day you add a holding.
           </p>
         ) : unit === "all" ? (
           <div className="flex flex-col gap-4">
@@ -129,7 +129,7 @@ export const HistoryChart = memo(function HistoryChart({ history }: { history: H
           <div className="h-56">
             {data.length < 2 ? (
               <p className="flex h-full items-center text-sm text-muted-foreground">
-                History appears after the first price refresh.
+                History starts the day you add a holding.
               </p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">

@@ -3,8 +3,7 @@ import { FALLBACK_MARKET } from "@/lib/fallback-prices";
 import { usePortfolio } from "@/lib/store";
 import {
   aggregate,
-  seedHistory,
-  upsertTodaySnapshot,
+  realHistory,
   valueHolding,
   yesterdayPoint,
 } from "@/lib/valuation";
@@ -40,10 +39,7 @@ export function syncHistoryFromTotals() {
   const market = lastPrices ?? FALLBACK_MARKET;
   const views = holdings.map((holding) => valueHolding(holding, market));
   const totals = aggregate(views, market, yesterdayPoint(history));
-  const next =
-    history.length === 0
-      ? seedHistory(totals.currentInr, market)
-      : upsertTodaySnapshot(history, totals);
+  const next = realHistory(history, holdings, totals);
   const prev = history[history.length - 1];
   const last = next[next.length - 1];
   if (
@@ -51,7 +47,8 @@ export function syncHistoryFromTotals() {
     last &&
     prev.date === last.date &&
     Math.abs(prev.inr - last.inr) < 1 &&
-    history.length === next.length
+    history.length === next.length &&
+    history[0]?.date === next[0]?.date
   ) {
     return;
   }
