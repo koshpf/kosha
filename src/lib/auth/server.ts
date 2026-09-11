@@ -48,7 +48,10 @@ import {
 } from "./preview";
 
 // Kick (and share) PGLite bootstrap as soon as the auth server module loads.
-void ensureDbReady();
+// Skip on Vercel without Postgres — Kosha does not use a server DB.
+if (typeof process === "undefined" || !process.env.VERCEL) {
+  void ensureDbReady();
+}
 
 /**
  * Preview secret must outlive module reloads: PGLite (and its session rows) is
