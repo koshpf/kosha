@@ -21,6 +21,7 @@ export type VaultPayload = {
   lastPrices: MarketQuotes | null;
   theme: "dark" | "light";
   showUsd: boolean;
+  hideAmounts?: boolean;
   seeded: boolean;
   earn: EarnConfig;
 };
@@ -94,6 +95,7 @@ export function parseVault(raw: string): VaultPayload {
     lastPrices: (source as VaultPayload).lastPrices ?? null,
     theme: (source as VaultPayload).theme === "light" ? "light" : "dark",
     showUsd: (source as VaultPayload).showUsd !== false,
+    hideAmounts: Boolean((source as VaultPayload).hideAmounts),
     earn: mergeEarn((source as VaultPayload).earn),
   };
 }

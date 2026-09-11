@@ -1,4 +1,5 @@
 import { Bitcoin, IndianRupee, Scale } from "lucide-react";
+import { Hidden } from "@/components/hide-amounts";
 import { Card } from "@/components/ui/card";
 import { PnlText } from "@/components/pnl";
 import {
@@ -27,6 +28,7 @@ export function NetWorthCards({
       sub: showUsd ? formatUsd(totals.usd) : "Default currency",
       extra: <PnlText amount={totals.dayChangeInr} />,
       extraLabel: "Today",
+      maskSub: true,
     },
     {
       key: "gold",
@@ -40,6 +42,7 @@ export function NetWorthCards({
         </span>
       ),
       extraLabel: "Spot",
+      maskSub: false,
     },
     {
       key: "btc",
@@ -51,6 +54,7 @@ export function NetWorthCards({
         <span className="tabular-nums text-muted-foreground">{formatUsd(market.btcUsd)}</span>
       ),
       extraLabel: "Spot",
+      maskSub: false,
     },
   ];
 
@@ -65,10 +69,12 @@ export function NetWorthCards({
             <card.icon className="size-4 text-subtle" />
           </div>
           <p className="font-display text-3xl leading-none font-medium tracking-tight tabular-nums md:text-4xl">
-            {card.value}
+            <Hidden>{card.value}</Hidden>
           </p>
           <div className="flex items-end justify-between gap-3 text-sm">
-            <p className="text-muted-foreground">{card.sub}</p>
+            <p className="text-muted-foreground">
+              {card.maskSub ? <Hidden>{card.sub}</Hidden> : card.sub}
+            </p>
             <div className="text-right">
               <p className="text-xs text-subtle">{card.extraLabel}</p>
               {card.extra}

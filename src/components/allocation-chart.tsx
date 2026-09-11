@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useHideAmounts } from "@/components/hide-amounts";
 import { typeShortLabel } from "@/lib/asset-types";
 import { formatInr } from "@/lib/format";
 import type { HoldingView } from "@/lib/types";
@@ -21,6 +22,7 @@ const SLICE: Record<string, string> = {
 };
 
 export const AllocationChart = memo(function AllocationChart({ views }: { views: HoldingView[] }) {
+  const hideAmounts = useHideAmounts();
   const rows = allocationByType(views);
   const total = rows.reduce((sum, row) => sum + row.value, 0);
   const data = rows.map((row) => ({
@@ -67,7 +69,9 @@ export const AllocationChart = memo(function AllocationChart({ views }: { views:
               </Pie>
               <Tooltip
                 isAnimationActive={false}
-                formatter={(value) => formatInr(Number(value ?? 0))}
+                formatter={(value) =>
+                  hideAmounts ? "••••" : formatInr(Number(value ?? 0))
+                }
                 contentStyle={{
                   background: "var(--color-card)",
                   border: "1px solid var(--color-border)",

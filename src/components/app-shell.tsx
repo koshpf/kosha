@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, List, Plus, Settings } from "lucide-react";
 import type { ReactNode } from "react";
+import { HideAmountsToggle } from "@/components/hide-amounts";
 import { PriceSync } from "@/components/price-sync";
 import { VaultSwitcher } from "@/components/vault-switcher";
 import { cn } from "@/lib/utils";
@@ -23,8 +24,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="font-display text-2xl italic tracking-tight">Kosha</span>
           <span className="mt-1 block text-xs text-muted-foreground">Treasury</span>
         </Link>
-        <div className="mt-4 px-3">
-          <VaultSwitcher />
+        <div className="mt-4 flex items-center gap-1 px-3">
+          <div className="min-w-0 flex-1">
+            <VaultSwitcher />
+          </div>
+          <HideAmountsToggle />
         </div>
         <nav className="mt-6 flex flex-1 flex-col gap-1 px-3">
           {NAV.map((item) => {
@@ -59,7 +63,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Link to="/" className="font-display text-xl italic tracking-tight">
           Kosha
         </Link>
-        <VaultSwitcher />
+        <div className="flex items-center gap-1">
+          <VaultSwitcher />
+          <HideAmountsToggle />
+        </div>
       </header>
 
       <main className="md:pl-56">

@@ -1,3 +1,4 @@
+import { Hidden } from "@/components/hide-amounts";
 import { formatPct, formatSignedInr, pnlTone } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -21,8 +22,10 @@ export function PnlText({
         className,
       )}
     >
-      {formatSignedInr(amount)}
-      {pct != null ? ` (${formatPct(pct)})` : null}
+      <Hidden>
+        {formatSignedInr(amount)}
+        {pct != null ? ` (${formatPct(pct)})` : null}
+      </Hidden>
     </span>
   );
 }

@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Pencil, Search, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PnlText } from "@/components/pnl";
+import { Hidden } from "@/components/hide-amounts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -104,17 +105,21 @@ export function HoldingsList({
                         ? ` · ${row.holding.ticker}`
                         : ""}
                     {row.quoted && row.pricePerUnit != null && (row.holding.type === "indian_mf" || row.holding.type === "ulip")
-                      ? ` · NAV ₹${row.pricePerUnit.toLocaleString("en-IN", { maximumFractionDigits: 4 })}`
+                      ? <Hidden>{` · NAV ₹${row.pricePerUnit.toLocaleString("en-IN", { maximumFractionDigits: 4 })}`}</Hidden>
                       : ""}
                   </p>
                 </td>
                 <td className="px-4 py-3 tabular-nums">
-                  {formatQty(row.holding.quantity)}
-                  {row.holding.type === "usd_cash" ? ` ${row.holding.currency}` : ""}
+                  <Hidden>
+                    {formatQty(row.holding.quantity)}
+                    {row.holding.type === "usd_cash" ? ` ${row.holding.currency}` : ""}
+                  </Hidden>
                 </td>
-                <td className="px-4 py-3 tabular-nums">{formatInr(row.costBasisInr)}</td>
+                <td className="px-4 py-3 tabular-nums">
+                  <Hidden>{formatInr(row.costBasisInr)}</Hidden>
+                </td>
                 <td className="px-4 py-3 tabular-nums font-medium">
-                  {formatInr(row.currentValueInr)}
+                  <Hidden>{formatInr(row.currentValueInr)}</Hidden>
                 </td>
                 <td className="px-4 py-3">
                   <PnlText amount={row.pnlInr} pct={row.pnlPct} />
@@ -159,18 +164,24 @@ export function HoldingsList({
                   {row.holding.ticker ? ` · ${row.holding.ticker}` : ""}
                   {row.holding.type === "usd_cash" ? ` ${row.holding.currency}` : ""}
                   {" · "}
-                  {formatQty(row.holding.quantity)}
-                  {row.holding.type === "usd_cash" ? ` ${row.holding.currency}` : ""}
+                  <Hidden>
+                    {formatQty(row.holding.quantity)}
+                    {row.holding.type === "usd_cash" ? ` ${row.holding.currency}` : ""}
+                  </Hidden>
                 </p>
                 {row.holding.type === "indian_mf" || row.holding.type === "ulip" ? (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {row.quoted && row.pricePerUnit != null
-                      ? `NAV ₹${row.pricePerUnit.toLocaleString("en-IN", { maximumFractionDigits: 4 })}`
-                      : "Waiting for live NAV"}
+                    {row.quoted && row.pricePerUnit != null ? (
+                      <Hidden>{`NAV ₹${row.pricePerUnit.toLocaleString("en-IN", { maximumFractionDigits: 4 })}`}</Hidden>
+                    ) : (
+                      "Waiting for live NAV"
+                    )}
                   </p>
                 ) : null}
               </div>
-              <Badge variant="outline">{formatInr(row.currentValueInr)}</Badge>
+              <Badge variant="outline">
+                <Hidden>{formatInr(row.currentValueInr)}</Hidden>
+              </Badge>
             </div>
             <div className="mt-3 flex items-center justify-between text-sm">
               <PnlText amount={row.pnlInr} pct={row.pnlPct} />

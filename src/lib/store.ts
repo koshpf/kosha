@@ -27,6 +27,7 @@ type PortfolioState = VaultPayload & {
   setHistory: (history: HistoryPoint[]) => void;
   setTheme: (theme: ThemeMode) => void;
   setShowUsd: (show: boolean) => void;
+  setHideAmounts: (hide: boolean) => void;
   setEarn: (earn: EarnConfig) => void;
   switchVault: (id: string) => void;
   addVault: (role: MemberRole, name?: string) => string;
@@ -63,6 +64,7 @@ export const usePortfolio = create<PortfolioState>()(
       lastPrices: null,
       theme: "dark",
       showUsd: true,
+      hideAmounts: false,
       seeded: false,
       earn: { ...EMPTY_EARN },
       hasHydrated: false,
@@ -116,6 +118,7 @@ export const usePortfolio = create<PortfolioState>()(
       },
       setTheme: (theme) => set({ theme }),
       setShowUsd: (showUsd) => set({ showUsd }),
+      setHideAmounts: (hideAmounts) => set({ hideAmounts }),
       setEarn: (earn) => {
         set({ earn: mergeEarn(earn) });
         persistSnapshot();
@@ -179,6 +182,7 @@ export const usePortfolio = create<PortfolioState>()(
           lastPrices: s.lastPrices,
           theme: s.theme,
           showUsd: s.showUsd,
+          hideAmounts: s.hideAmounts,
           seeded: s.seeded,
           earn: s.earn,
         };
@@ -224,6 +228,7 @@ export const usePortfolio = create<PortfolioState>()(
         history: state.history,
         theme: state.theme,
         showUsd: state.showUsd,
+        hideAmounts: state.hideAmounts,
         seeded: state.seeded,
         earn: state.earn,
       }),
@@ -248,6 +253,7 @@ function persistSnapshot() {
     history: s.history,
     theme: s.theme,
     showUsd: s.showUsd,
+    hideAmounts: s.hideAmounts,
     seeded: s.seeded,
     earn: s.earn,
   });

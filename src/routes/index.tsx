@@ -3,6 +3,7 @@ import { lazy, Suspense, useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { EarnStrip, ShareNetWorthButton, SupportCard } from "@/components/earn-cta";
+import { Hidden, useHideAmounts } from "@/components/hide-amounts";
 import { NetWorthCards } from "@/components/net-worth-cards";
 import { PnlText } from "@/components/pnl";
 import { PriceTicker } from "@/components/price-ticker";
@@ -33,6 +34,7 @@ function Dashboard() {
   const vaults = usePortfolio((s) => s.vaults);
   const activeVaultId = usePortfolio((s) => s.activeVaultId);
   const activeVault = vaults.find((row) => row.id === activeVaultId) ?? vaults[0];
+  const hideAmounts = useHideAmounts();
   const refresh = useRefreshPrices();
   const [busy, setBusy] = useState(false);
 
@@ -77,9 +79,11 @@ function Dashboard() {
             <PriceTicker market={market} refreshing={busy} onRefresh={() => void onRefresh()} />
             <NetWorthCards totals={totals} market={market} showUsd={showUsd} />
             {vaults.length > 1 ? <FamilyTotals vaults={vaults} market={market} /> : null}
-            <div className="flex flex-wrap gap-2">
-              <ShareNetWorthButton totals={totals} />
-            </div>
+            {hideAmounts ? null : (
+              <div className="flex flex-wrap gap-2">
+                <ShareNetWorthButton totals={totals} />
+              </div>
+            )}
             <SupportCard />
             <EarnStrip />
             <p className="text-xs text-subtle">
@@ -115,8 +119,12 @@ function Dashboard() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm tabular-nums">{formatInr(row.currentValueInr)}</p>
-                      <p className="text-xs text-muted-foreground">{formatPct(row.pnlPct)}</p>
+                      <p className="text-sm tabular-nums">
+                        <Hidden>{formatInr(row.currentValueInr)}</Hidden>
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        <Hidden>{formatPct(row.pnlPct)}</Hidden>
+                      </p>
                     </div>
                   </Link>
                 ))}
@@ -159,12 +167,16 @@ function FamilyTotals({
         {rows.map((row) => (
           <div key={row.id} className="flex items-center justify-between text-sm">
             <span>{row.name}</span>
-            <span className="tabular-nums">{formatInr(row.inr)}</span>
+            <span className="tabular-nums">
+              <Hidden>{formatInr(row.inr)}</Hidden>
+            </span>
           </div>
         ))}
         <div className="mt-1 flex items-center justify-between border-t border-border pt-2 text-sm font-medium">
           <span>Together</span>
-          <span className="tabular-nums">{formatInr(family)}</span>
+          <span className="tabular-nums">
+            <Hidden>{formatInr(family)}</Hidden>
+          </span>
         </div>
       </CardContent>
     </Card>

@@ -8,6 +8,7 @@ import {
   YAxis,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useHideAmounts } from "@/components/hide-amounts";
 import { formatBtcNumber, formatDate, formatGoldGrams, formatInr } from "@/lib/format";
 import type { HistoryPoint, HistoryUnit } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ function formatUnit(unit: HistoryUnit, value: number): string {
 
 export const HistoryChart = memo(function HistoryChart({ history }: { history: HistoryPoint[] }) {
   const [unit, setUnit] = useState<HistoryUnit>("inr");
+  const hideAmounts = useHideAmounts();
   const data = useMemo(
     () =>
       history.map((row) => ({
@@ -82,21 +84,23 @@ export const HistoryChart = memo(function HistoryChart({ history }: { history: H
                 />
                 <YAxis
                   tickFormatter={(v) =>
-                    unit === "inr"
-                      ? `₹${Math.round(Number(v) / 100000)}L`
-                      : unit === "gold"
-                        ? `${Math.round(Number(v))}g`
-                        : Number(v).toFixed(3)
+                    hideAmounts
+                      ? ""
+                      : unit === "inr"
+                        ? `₹${Math.round(Number(v) / 100000)}L`
+                        : unit === "gold"
+                          ? `${Math.round(Number(v))}g`
+                          : Number(v).toFixed(3)
                   }
                   tick={{ fill: "var(--color-muted-foreground)", fontSize: 11 }}
                   axisLine={false}
                   tickLine={false}
-                  width={48}
+                  width={hideAmounts ? 8 : 48}
                 />
                 <Tooltip
                   isAnimationActive={false}
                   labelFormatter={(label) => formatDate(String(label))}
-                  formatter={(value) => formatUnit(unit, Number(value ?? 0))}
+                  formatter={(value) => (hideAmounts ? "••••" : formatUnit(unit, Number(value ?? 0)))}
                   contentStyle={{
                     background: "var(--color-card)",
                     border: "1px solid var(--color-border)",
