@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-mono: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: #0c0d0c;
+  --color-foreground: #eceee9;
+  --color-card: #151716;
+  --color-card-foreground: #eceee9;
+  --color-muted: #1c1f1d;
+  --color-muted-foreground: #9aa39a;
+  --color-subtle: #6e766e;
+  --color-border: #2a2e2b;
+  --color-primary: #c5cdc0;
+  --color-primary-foreground: #101210;
+  --color-ring: #c5cdc0;
+  --color-gain: #7dba8a;
+  --color-loss: #d17a74;
+  --color-paper: #eceee9;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --shadow-border: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --shadow-border-hover: 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+html.light {
+  --color-background: #f3f1ea;
+  --color-foreground: #1a1c19;
+  --color-card: #fffcf6;
+  --color-card-foreground: #1a1c19;
+  --color-muted: #ebe7dc;
+  --color-muted-foreground: #5c635c;
+  --color-subtle: #7a8178;
+  --color-border: #d9d4c6;
+  --color-primary: #1a1c19;
+  --color-primary-foreground: #f4f2ec;
+  --color-ring: #1a1c19;
+  --color-gain: #2f7a48;
+  --color-loss: #b4453d;
+  --color-paper: #1a1c19;
+  --shadow-border:
+    0 0 0 1px rgba(26, 28, 25, 0.06),
+    0 1px 2px -1px rgba(26, 28, 25, 0.06),
+    0 2px 4px 0 rgba(26, 28, 25, 0.04);
+  --shadow-border-hover:
+    0 0 0 1px rgba(26, 28, 25, 0.1),
+    0 1px 2px -1px rgba(26, 28, 25, 0.08),
+    0 2px 6px 0 rgba(26, 28, 25, 0.06);
+}
+
+html,
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  min-height: 100%;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  * {
+    border-color: var(--color-border);
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

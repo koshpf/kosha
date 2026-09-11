@@ -1,0 +1,1 @@
+import{dt as e,g as t,v as n,x as r}from"./dist-77hOlceb.js";import{c as i}from"./button-BmD2WY74.js";var a=e();function o({amount:e,pct:o,className:s}){let c=r(e);return(0,a.jsxs)(`span`,{className:i(`tabular-nums`,c===`gain`&&`text-gain`,c===`loss`&&`text-loss`,c===`flat`&&`text-muted-foreground`,s),children:[n(e),o==null?null:` (${t(o)})`]})}export{o as t};
