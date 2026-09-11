@@ -2,13 +2,12 @@ import { Copy, ExternalLink, Heart, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { mergeEarn, partnerForType, partnersFrom, upiPayHref } from "@/lib/earn";
+import { OWNER_EARN, partnerForType, partnersFrom, upiPayHref } from "@/lib/earn";
 import { formatBtc, formatGoldGrams, formatInr } from "@/lib/format";
-import { usePortfolio } from "@/lib/store";
 import type { AssetType, PortfolioTotals } from "@/lib/types";
 
 export function useEarn() {
-  return mergeEarn(usePortfolio((s) => s.earn));
+  return OWNER_EARN;
 }
 
 export function PartnerCta({ type }: { type: AssetType }) {

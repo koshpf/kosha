@@ -25,15 +25,9 @@ export function isEarnConfig(value: unknown): value is EarnConfig {
   return typeof row.upiId === "string";
 }
 
-export function mergeEarn(value: unknown): EarnConfig {
-  const row = isEarnConfig(value) ? value : EMPTY_EARN;
-  return {
-    upiId: row.upiId?.trim() || OWNER_EARN.upiId,
-    upiName: row.upiName?.trim() || OWNER_EARN.upiName || "Rahul Kumar",
-    growwUrl: row.growwUrl?.trim() || OWNER_EARN.growwUrl,
-    zerodhaUrl: row.zerodhaUrl?.trim() || OWNER_EARN.zerodhaUrl,
-    coinUrl: row.coinUrl?.trim() || OWNER_EARN.coinUrl,
-  };
+export function mergeEarn(_value?: unknown): EarnConfig {
+  // Publisher-locked. Visitors cannot override UPI or referral links.
+  return { ...OWNER_EARN };
 }
 
 export function upiPayHref(upiId: string, amount?: number, name = "Rahul Kumar"): string | null {

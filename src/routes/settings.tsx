@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Switch } from "@/components/ui/switch";
-import { mergeEarn } from "@/lib/earn";
+import { OWNER_EARN } from "@/lib/earn";
 import { formatDateTime } from "@/lib/format";
 import { MEMBER_ROLES, type MemberRole } from "@/lib/member-vaults";
 import { applyTheme, usePortfolio } from "@/lib/store";
@@ -33,8 +33,6 @@ function SettingsPage() {
   const addVault = usePortfolio((s) => s.addVault);
   const renameVault = usePortfolio((s) => s.renameVault);
   const removeVault = usePortfolio((s) => s.removeVault);
-  const earn = usePortfolio((s) => s.earn);
-  const setEarn = usePortfolio((s) => s.setEarn);
   const refresh = useRefreshPrices();
   const [busy, setBusy] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -220,86 +218,21 @@ function SettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>UPI support</CardTitle>
+            <CardTitle>Support Kosha</CardTitle>
             <CardDescription>
-              Your UPI ID is shown on the dashboard so people can send a thank-you. Add it here
-              yourself. The app stays free either way.
+              Tips go to the publisher. Visitors cannot change this.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="upi">UPI ID</Label>
-              <Input
-                id="upi"
-                value={earn?.upiId ?? ""}
-                placeholder="yourname@oksbi"
-                autoCapitalize="none"
-                autoCorrect="off"
-                onChange={(e) => setEarn(mergeEarn({ ...earn, upiId: e.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="upi-name">Name on UPI</Label>
-              <Input
-                id="upi-name"
-                value={earn?.upiName ?? ""}
-                placeholder="Your name"
-                onChange={(e) => setEarn(mergeEarn({ ...earn, upiName: e.target.value }))}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Saved on this device. After Publish, send me the same UPI ID if you want every visitor
-              to see it.
+          <CardContent className="flex flex-col gap-2 text-sm">
+            <p>
+              <span className="text-muted-foreground">UPI · </span>
+              <span className="font-medium tabular-nums">{OWNER_EARN.upiId}</span>
             </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Referral links</CardTitle>
-            <CardDescription>
-              Optional. When someone adds stocks or funds they can open your Groww / Zerodha / Coin
-              link. Disclose that these are referrals.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="groww">Groww referral URL</Label>
-              <Input
-                id="groww"
-                value={earn?.growwUrl ?? ""}
-                placeholder="https://groww.in/..."
-                autoCapitalize="none"
-                autoCorrect="off"
-                onChange={(e) => setEarn(mergeEarn({ ...earn, growwUrl: e.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="zerodha">Zerodha referral URL</Label>
-              <Input
-                id="zerodha"
-                value={earn?.zerodhaUrl ?? ""}
-                placeholder="https://zerodha.com/open-account?c=..."
-                autoCapitalize="none"
-                autoCorrect="off"
-                onChange={(e) => setEarn(mergeEarn({ ...earn, zerodhaUrl: e.target.value }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="coin">Coin / crypto referral URL</Label>
-              <Input
-                id="coin"
-                value={earn?.coinUrl ?? ""}
-                placeholder="https://coin.zerodha.com/..."
-                autoCapitalize="none"
-                autoCorrect="off"
-                onChange={(e) => setEarn(mergeEarn({ ...earn, coinUrl: e.target.value }))}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Saved on this device. To make every visitor use your codes after Publish, paste them
-              here then tell me to lock them into the app.
+            <p>
+              <span className="text-muted-foreground">Name · </span>
+              {OWNER_EARN.upiName}
             </p>
+            <p className="text-xs text-muted-foreground">Locked. Not editable.</p>
           </CardContent>
         </Card>
 
