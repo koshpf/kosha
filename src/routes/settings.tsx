@@ -355,31 +355,38 @@ function SettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>How to verify we don’t have your money</CardTitle>
-            <CardDescription>
-              A website cannot show Android-style permissions. You can still check.
-            </CardDescription>
+            <CardTitle>How to verify</CardTitle>
+            <CardDescription>Three checks on your phone. No technical skill needed.</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground">
-            <p>
-              There is no sign-in. We cannot look up your vault on a server because it is not there.
-              Holdings sit in this browser’s storage (Chrome: Settings → Site settings → this site, or
-              DevTools → Application → Local Storage).
-            </p>
-            <p>
-              When you tap Refresh, the network only asks public price feeds (stocks, gold, bitcoin).
-              It does not send your quantities or names.
-            </p>
-            <p>
-              Download the backup — it is a file on your phone. Open it. That is the ledger.
+          <CardContent className="flex flex-col gap-4 text-sm">
+            <ol className="flex list-decimal flex-col gap-3 pl-4 text-muted-foreground">
+              <li>
+                <span className="font-medium text-foreground">No login.</span> Kosha never asks for
+                Gmail, OTP, or a password. If we stored your vault, we would need an account to show
+                it back to you.
+              </li>
+              <li>
+                <span className="font-medium text-foreground">Airplane mode.</span> Add a holding,
+                turn on Airplane mode, open Kosha again. Your numbers are still there. Prices won’t
+                refresh — that’s the internet. The ledger is on this phone.
+              </li>
+              <li>
+                <span className="font-medium text-foreground">Backup file.</span> Tap Download backup
+                above. Open the file in Files / Downloads. That JSON is your ledger. It never left
+                the device unless you share the file.
+              </li>
+            </ol>
+            <p className="text-xs text-subtle">
+              Chrome will not ask for Contacts, SMS, Camera, or Location. Refresh only fetches public
+              gold, stock, and bitcoin prices — not your quantities.
             </p>
             <a
               href="https://github.com/koshpf/kosha"
               target="_blank"
               rel="noreferrer"
-              className="text-foreground underline-offset-4 hover:underline"
+              className="text-sm text-foreground underline-offset-4 hover:underline"
             >
-              Source on GitHub
+              Source on GitHub (optional)
             </a>
           </CardContent>
         </Card>
