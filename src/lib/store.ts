@@ -10,7 +10,7 @@ import {
   type MemberVault,
 } from "@/lib/member-vaults";
 import { mergeMarketQuotes } from "@/lib/market-merge";
-import { SAMPLE_HOLDINGS } from "@/lib/sample-holdings";
+import { isSampleHoldingId, labeledSampleHoldings } from "@/lib/sample-holdings";
 import type { Holding, HistoryPoint, MarketQuotes } from "@/lib/types";
 import { normalizeHolding } from "@/lib/types";
 import { VAULT_KEY, vaultPersistStorage, writeVaultSync, type VaultPayload } from "@/lib/vault";
@@ -37,6 +37,7 @@ type PortfolioState = VaultPayload & {
   importVault: (payload: VaultPayload) => void;
   snapshot: () => VaultPayload;
   resetLedger: () => void;
+  clearSampleHoldings: () => void;
 };
 
 function applyActive(vaults: MemberVault[], activeVaultId: string) {
@@ -76,7 +77,7 @@ export const usePortfolio = create<PortfolioState>()(
           set(writeActive(vaults, activeVaultId, { seeded: true }));
           return;
         }
-        set(writeActive(vaults, activeVaultId, { holdings: SAMPLE_HOLDINGS, seeded: true }));
+        set(writeActive(vaults, activeVaultId, { holdings: labeledSampleHoldings(), seeded: true }));
       },
       setHydrated: () => set({ hasHydrated: true }),
       addHolding: (holding) => {
@@ -188,6 +189,18 @@ export const usePortfolio = create<PortfolioState>()(
       resetLedger: () => {
         const s = get();
         set(writeActive(s.vaults, s.activeVaultId, { holdings: [], history: [], seeded: true }));
+        persistSnapshot();
+      },
+      clearSampleHoldings: () => {
+        const s = get();
+        const kept = s.holdings.filter((row) => !isSampleHoldingId(row.id));
+        set(
+          writeActive(s.vaults, s.activeVaultId, {
+            holdings: kept,
+            history: kept.length === 0 ? [] : s.history,
+            seeded: true,
+          }),
+        );
         persistSnapshot();
       },
     }),

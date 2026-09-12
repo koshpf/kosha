@@ -153,3 +153,17 @@ export const SAMPLE_HOLDINGS: Holding[] = [
     updatedAt: t0,
   },
 ];
+
+export const SAMPLE_HOLDING_IDS = new Set(SAMPLE_HOLDINGS.map((row) => row.id));
+
+export function isSampleHoldingId(id: string) {
+  return SAMPLE_HOLDING_IDS.has(id);
+}
+
+export function labeledSampleHoldings(): Holding[] {
+  return SAMPLE_HOLDINGS.map((row) => ({
+    ...row,
+    name: row.name.startsWith("Sample · ") ? row.name : `Sample · ${row.name}`,
+    notes: row.notes?.includes("DEMO") ? row.notes : [row.notes, "DEMO"].filter(Boolean).join(" · "),
+  }));
+}

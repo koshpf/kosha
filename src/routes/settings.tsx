@@ -84,8 +84,8 @@ function SettingsPage() {
           <CardHeader>
             <CardTitle>Your vault</CardTitle>
             <CardDescription>
-              Holdings live on this device only — no account, nothing uploaded. Export a backup so you
-              can reopen Kosha on another phone or after a reset.
+              Holdings live on this phone or computer only — no account, nothing uploaded to us.
+              Export a backup so you can reopen Kosha after a reset.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
@@ -350,6 +350,37 @@ function SettingsPage() {
             >
               Refresh prices
             </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>How to verify we don’t have your money</CardTitle>
+            <CardDescription>
+              A website cannot show Android-style permissions. You can still check.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground">
+            <p>
+              There is no sign-in. We cannot look up your vault on a server because it is not there.
+              Holdings sit in this browser’s storage (Chrome: Settings → Site settings → this site, or
+              DevTools → Application → Local Storage).
+            </p>
+            <p>
+              When you tap Refresh, the network only asks public price feeds (stocks, gold, bitcoin).
+              It does not send your quantities or names.
+            </p>
+            <p>
+              Download the backup — it is a file on your phone. Open it. That is the ledger.
+            </p>
+            <a
+              href="https://github.com/koshpf/kosha"
+              target="_blank"
+              rel="noreferrer"
+              className="text-foreground underline-offset-4 hover:underline"
+            >
+              Source on GitHub
+            </a>
           </CardContent>
         </Card>
 
