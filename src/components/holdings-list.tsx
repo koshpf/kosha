@@ -104,6 +104,9 @@ export function HoldingsList({
                       : row.holding.ticker
                         ? ` · ${row.holding.ticker}`
                         : ""}
+                    {row.holding.type === "indian_mf" || row.holding.type === "ulip"
+                      ? ` · avg ₹${row.holding.avgPrice.toLocaleString("en-IN", { maximumFractionDigits: 4 })}`
+                      : ""}
                     {row.quoted && row.pricePerUnit != null && (row.holding.type === "indian_mf" || row.holding.type === "ulip")
                       ? (
                         <Hidden>
@@ -180,11 +183,11 @@ export function HoldingsList({
                   <p className="mt-1 text-xs text-muted-foreground">
                     {row.quoted && row.pricePerUnit != null ? (
                       <Hidden>
-                        {`NAV ₹${row.pricePerUnit.toLocaleString("en-IN", { maximumFractionDigits: 4 })}`}
+                        {`Avg ₹${row.holding.avgPrice.toLocaleString("en-IN", { maximumFractionDigits: 4 })} · NAV ₹${row.pricePerUnit.toLocaleString("en-IN", { maximumFractionDigits: 4 })}`}
                         {row.quoteAsOf ? ` · ${formatDate(row.quoteAsOf)}` : ""}
                       </Hidden>
                     ) : (
-                      "Using average NAV"
+                      `Avg ₹${row.holding.avgPrice.toLocaleString("en-IN", { maximumFractionDigits: 4 })}`
                     )}
                   </p>
                 ) : null}

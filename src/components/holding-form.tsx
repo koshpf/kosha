@@ -283,7 +283,7 @@ export function HoldingForm({
         setError("Enter a valid quantity.");
         return;
       }
-      if (!Number.isFinite(costBasisInr) || costBasisInr < 0) {
+      if (!Number.isFinite(costBasisInr) || costBasisInr < 0 || Math.abs(costBasisInr - qty * price) < 1) {
         if (form.type === "us_stock") costBasisInr = qty * price * usdInr;
         else costBasisInr = qty * price;
       }

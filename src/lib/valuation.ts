@@ -14,8 +14,34 @@ export function goldPriceForPurity(market: MarketQuotes, purity: 22 | 24 = 24): 
   return market.goldInrPerGram24k * (purity / 24);
 }
 
+/** What you put in — units × average price — not a leftover cost field. */
+export function investedInr(holding: Holding, market: MarketQuotes): number {
+  const qty = holding.quantity;
+  const avg = holding.avgPrice;
+  switch (holding.type) {
+    case "indian_stock":
+    case "etf":
+    case "indian_mf":
+    case "ulip":
+    case "physical_gold":
+      if (qty > 0 && avg > 0) return qty * avg;
+      return holding.costBasisInr;
+    case "us_stock":
+      if (holding.costBasisInr > 0) return holding.costBasisInr;
+      if (qty > 0 && avg > 0) return qty * avg * market.usdInr;
+      return 0;
+    case "usd_cash":
+      if (holding.costBasisInr > 0) return holding.costBasisInr;
+      return qty > 0 ? qty * inrPerFx(market, holding.currency) : 0;
+    default:
+      if (holding.costBasisInr > 0) return holding.costBasisInr;
+      if (qty > 0 && avg > 0) return qty * avg;
+      return 0;
+  }
+}
+
 export function valueHolding(holding: Holding, market: MarketQuotes): HoldingView {
-  const costBasisInr = holding.costBasisInr;
+  const costBasisInr = investedInr(holding, market);
   let currentValueInr = 0;
   let pricePerUnit: number | null = null;
   let priceCurrency: HoldingView["priceCurrency"] = null;
