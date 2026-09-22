@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ASSET_TYPES, typeShortLabel } from "@/lib/asset-types";
-import { formatDateTime, formatInr, formatQty, relativeTime } from "@/lib/format";
+import { formatDate, formatDateTime, formatInr, formatQty, relativeTime } from "@/lib/format";
 import type { AssetType, HoldingView } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -105,8 +105,15 @@ export function HoldingsList({
                         ? ` · ${row.holding.ticker}`
                         : ""}
                     {row.quoted && row.pricePerUnit != null && (row.holding.type === "indian_mf" || row.holding.type === "ulip")
-                      ? <Hidden>{` · NAV ₹${row.pricePerUnit.toLocaleString("en-IN", { maximumFractionDigits: 4 })}`}</Hidden>
-                      : ""}
+                      ? (
+                        <Hidden>
+                          {` · NAV ₹${row.pricePerUnit.toLocaleString("en-IN", { maximumFractionDigits: 4 })}`}
+                          {row.quoteAsOf ? ` · ${formatDate(row.quoteAsOf)}` : ""}
+                        </Hidden>
+                      )
+                      : row.holding.type === "indian_mf" && !row.quoted
+                        ? " · using average NAV"
+                        : ""}
                   </p>
                 </td>
                 <td className="px-4 py-3 tabular-nums">
@@ -172,9 +179,12 @@ export function HoldingsList({
                 {row.holding.type === "indian_mf" || row.holding.type === "ulip" ? (
                   <p className="mt-1 text-xs text-muted-foreground">
                     {row.quoted && row.pricePerUnit != null ? (
-                      <Hidden>{`NAV ₹${row.pricePerUnit.toLocaleString("en-IN", { maximumFractionDigits: 4 })}`}</Hidden>
+                      <Hidden>
+                        {`NAV ₹${row.pricePerUnit.toLocaleString("en-IN", { maximumFractionDigits: 4 })}`}
+                        {row.quoteAsOf ? ` · ${formatDate(row.quoteAsOf)}` : ""}
+                      </Hidden>
                     ) : (
-                      "Waiting for live NAV"
+                      "Using average NAV"
                     )}
                   </p>
                 ) : null}

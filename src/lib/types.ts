@@ -43,6 +43,8 @@ export type Quote = {
   prevClose?: number;
   currency: QuoteCurrency;
   name?: string;
+  /** NAV date YYYY-MM-DD when known (AMFI). */
+  asOf?: string;
 };
 
 export type MarketQuotes = {
@@ -86,6 +88,7 @@ export type HoldingView = {
   priceCurrency: QuoteCurrency | null;
   lastUpdated: number;
   quoted: boolean;
+  quoteAsOf?: string;
 };
 
 export type PortfolioTotals = {

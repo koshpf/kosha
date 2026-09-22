@@ -106,6 +106,7 @@ export function valueHolding(holding: Holding, market: MarketQuotes): HoldingVie
     priceCurrency,
     lastUpdated: quoted ? market.asOf : holding.updatedAt,
     quoted,
+    quoteAsOf: quote?.asOf,
   };
 }
 

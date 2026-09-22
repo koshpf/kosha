@@ -3,7 +3,7 @@ import { useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FALLBACK_MARKET } from "@/lib/fallback-prices";
-import { formatInr, parseAmount } from "@/lib/format";
+import { formatDate, formatInr, parseAmount } from "@/lib/format";
 import { fetchOneQuote } from "@/lib/quotes";
 import { mfQuoteKey, yahooSymbol } from "@/lib/symbols";
 import { usePortfolio } from "@/lib/store";
@@ -145,6 +145,9 @@ export function LiveNavBox({
       <div className="flex flex-col gap-2">
         <Label>{label}</Label>
         <Input value={display || "Pick a name to fetch"} readOnly tabIndex={-1} />
+        {live?.asOf ? (
+          <p className="text-xs text-muted-foreground">As on {formatDate(live.asOf)}</p>
+        ) : null}
       </div>
       {live && Number.isFinite(qty) && qty > 0 ? (
         <div className="sm:col-span-2 rounded-md bg-muted px-3 py-3 text-sm">

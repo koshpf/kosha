@@ -36,7 +36,7 @@ async function fetchText(url: string, timeoutMs = 6000): Promise<string> {
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const res = await fetch(url, {
-      headers: { Accept: "text/html,application/xhtml+xml", "User-Agent": UA },
+      headers: { Accept: "text/plain,text/html,*/*;q=0.8", "User-Agent": UA },
       signal: ctrl.signal,
     });
     if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
@@ -224,38 +224,101 @@ async function fetchYahooBatch(symbols: string[]): Promise<Record<string, Quote>
   return out;
 }
 
+const AMFI_NAV_URLS = [
+  "https://portal.amfiindia.com/spages/NAVAll.txt",
+  "https://www.amfiindia.com/spages/NAVAll.txt",
+];
+
+const AMFI_MONTH: Record<string, string> = {
+  Jan: "01",
+  Feb: "02",
+  Mar: "03",
+  Apr: "04",
+  May: "05",
+  Jun: "06",
+  Jul: "07",
+  Aug: "08",
+  Sep: "09",
+  Oct: "10",
+  Nov: "11",
+  Dec: "12",
+};
+
+function amfiDateToIso(raw: string): string | undefined {
+  const m = raw.trim().match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/);
+  if (!m) return undefined;
+  const mon = AMFI_MONTH[`${m[2]![0]!.toUpperCase()}${m[2]!.slice(1).toLowerCase()}`];
+  if (!mon) return undefined;
+  return `${m[3]}-${mon}-${m[1]!.padStart(2, "0")}`;
+}
+
+function parseAmfiNavFile(text: string): Map<string, Quote> {
+  const map = new Map<string, Quote>();
+  for (const line of text.split(/\r?\n/)) {
+    if (!line.includes(";")) continue;
+    const parts = line.split(";");
+    if (parts.length < 5) continue;
+    const code = parts[0]?.trim();
+    if (!code || !/^\d{4,8}$/.test(code)) continue;
+    const nav = Number(parts[parts.length - 2]?.replace(/,/g, "").trim());
+    if (!Number.isFinite(nav) || nav <= 0) continue;
+    const scheme = parts[3]?.trim() ?? "";
+    const extra =
+      parts.length >= 8
+        ? [parts[4]?.trim(), parts[5]?.trim()].filter((p) => p && p !== "-")
+        : [];
+    map.set(code, {
+      price: nav,
+      currency: "INR",
+      name: [scheme, ...extra].filter(Boolean).join(" "),
+      asOf: amfiDateToIso(parts[parts.length - 1] ?? ""),
+    });
+  }
+  return map;
+}
+
+let amfiCache: { at: number; map: Map<string, Quote> } | null = null;
+const AMFI_TTL_MS = 3 * 60 * 60 * 1000;
+
+async function loadAmfiNavs(): Promise<Map<string, Quote>> {
+  if (amfiCache && Date.now() - amfiCache.at < AMFI_TTL_MS) return amfiCache.map;
+  for (const url of AMFI_NAV_URLS) {
+    try {
+      const text = await fetchText(url, 20000);
+      const map = parseAmfiNavFile(text);
+      if (map.size > 50) {
+        amfiCache = { at: Date.now(), map };
+        return map;
+      }
+    } catch {
+      /* next mirror */
+    }
+  }
+  return amfiCache?.map ?? new Map();
+}
+
 async function fetchMf(code: string): Promise<Quote | null> {
-  return firstOk([
-    async () => {
-      const data = await fetchJson<{
-        meta?: { scheme_name?: string };
-        data?: Array<{ nav?: string }>;
-      }>(`https://api.mfapi.in/mf/${encodeURIComponent(code)}`, 5000);
-      const nav = Number(data.data?.[0]?.nav);
-      const prev = Number(data.data?.[1]?.nav);
-      if (!Number.isFinite(nav) || nav <= 0) throw new Error("bad nav");
-      return {
-        price: nav,
-        prevClose: Number.isFinite(prev) ? prev : undefined,
-        currency: "INR" as const,
-        name: data.meta?.scheme_name,
-      };
-    },
-    async () => {
-      const data = await fetchJson<{
-        meta?: { scheme_name?: string };
-        data?: Array<{ nav?: string }>;
-      }>(`https://api.mfapi.in/mf/${encodeURIComponent(code)}/latest`, 5000);
-      const nav = Number(data.data?.[0]?.nav);
-      if (!Number.isFinite(nav) || nav <= 0) throw new Error("bad nav");
-      return {
-        price: nav,
-        prevClose: undefined,
-        currency: "INR" as const,
-        name: data.meta?.scheme_name,
-      };
-    },
-  ]);
+  const trimmed = code.trim();
+  if (!/^\d{4,8}$/.test(trimmed)) return null;
+  const amfi = await loadAmfiNavs();
+  const hit = amfi.get(trimmed);
+  if (hit) return hit;
+  try {
+    const data = await fetchJson<{
+      meta?: { scheme_name?: string };
+      data?: Array<{ nav?: string; date?: string }>;
+    }>(`https://api.mfapi.in/mf/${encodeURIComponent(trimmed)}/latest`, 4000);
+    const nav = Number(data.data?.[0]?.nav);
+    if (!Number.isFinite(nav) || nav <= 0) return null;
+    return {
+      price: nav,
+      currency: "INR",
+      name: data.meta?.scheme_name,
+      asOf: data.data?.[0]?.date,
+    };
+  } catch {
+    return null;
+  }
 }
 
 async function fetchUlip(code: string): Promise<Quote | null> {
@@ -429,22 +492,35 @@ let mfCatalogLoad: Promise<MfRow[]> | null = null;
 async function loadMfCatalog(): Promise<MfRow[]> {
   if (mfCatalog) return mfCatalog;
   if (!mfCatalogLoad) {
-    mfCatalogLoad = fetchJson<Array<{ schemeCode?: number; schemeName?: string }>>(
-      "https://api.mfapi.in/mf",
-      12000,
-    )
-      .then((rows) => {
-        mfCatalog = rows
-          .filter((row) => row.schemeCode && row.schemeName)
-          .map((row) => ({
-            code: String(row.schemeCode),
-            name: String(row.schemeName),
-          }));
-        return mfCatalog;
+    mfCatalogLoad = loadAmfiNavs()
+      .then((map) => {
+        const rows: MfRow[] = [];
+        for (const [code, quote] of map) {
+          rows.push({ code, name: quote.name || code });
+        }
+        if (rows.length > 50) {
+          mfCatalog = rows;
+          return rows;
+        }
+        throw new Error("amfi catalog empty");
       })
-      .catch(() => {
-        mfCatalogLoad = null;
-        return [];
+      .catch(async () => {
+        try {
+          const rows = await fetchJson<Array<{ schemeCode?: number; schemeName?: string }>>(
+            "https://api.mfapi.in/mf",
+            8000,
+          );
+          mfCatalog = rows
+            .filter((row) => row.schemeCode && row.schemeName)
+            .map((row) => ({
+              code: String(row.schemeCode),
+              name: String(row.schemeName),
+            }));
+          return mfCatalog;
+        } catch {
+          mfCatalogLoad = null;
+          return MF_SEEDS;
+        }
       });
   }
   return mfCatalogLoad;
