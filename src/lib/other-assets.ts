@@ -28,3 +28,16 @@ export function otherAssetFromHolding(name: string, ticker?: string) {
   const n = name.trim().toLowerCase();
   return OTHER_ASSETS.find((row) => row.label.toLowerCase() === n);
 }
+
+export function coinKind(ticker?: string): "BTC" | "ETH" | "CRYPTO" | null {
+  const id = ticker?.trim().toUpperCase();
+  if (id === "BTC" || id === "ETH" || id === "CRYPTO") return id;
+  return null;
+}
+
+/** Old "Other" saves stored a rupee balance as quantity. Don't treat that as coins. */
+export function isLegacyRupeeCoin(holding: { ticker?: string; quantity: number; avgPrice: number }): boolean {
+  const kind = coinKind(holding.ticker);
+  if (kind !== "BTC" && kind !== "ETH") return false;
+  return holding.avgPrice <= 1 && holding.quantity > (kind === "BTC" ? 5 : 50);
+}

@@ -13,7 +13,7 @@ import { ASSET_TYPES, ASSET_TYPE_MAP } from "@/lib/asset-types";
 import { FALLBACK_MARKET } from "@/lib/fallback-prices";
 import { formatBtcNumber, formatGoldGrams, formatInr, parseAmount } from "@/lib/format";
 import { FX_CURRENCIES, fxName, inrPerFx, isFxCode, type FxCode } from "@/lib/fx";
-import { OTHER_ASSETS, otherAssetById, otherAssetFromHolding } from "@/lib/other-assets";
+import { OTHER_ASSETS, coinKind, otherAssetById, otherAssetFromHolding } from "@/lib/other-assets";
 import { ULIP_FUNDS, ULIP_INSURERS, ulipByCode } from "@/lib/ulip-index";
 import { usePortfolio } from "@/lib/store";
 import type { AssetType, Exchange, GoldPurity, Holding, HoldingCurrency } from "@/lib/types";
@@ -62,7 +62,15 @@ function fromHolding(holding: Holding): FormState {
     avgPrice: String(holding.avgPrice || ""),
     costBasisInr: String(holding.costBasisInr || ""),
     purity: holding.purity ?? 22,
-    manualValueInr: holding.manualValueInr != null ? String(holding.manualValueInr) : "",
+    manualValueInr:
+      holding.type === "other" &&
+      holding.ticker?.toUpperCase() === "CRYPTO" &&
+      holding.manualValueInr != null &&
+      holding.quantity > 0
+        ? String(holding.manualValueInr / holding.quantity)
+        : holding.manualValueInr != null
+          ? String(holding.manualValueInr)
+          : "",
     notes: holding.notes ?? "",
     fxCode: isFxCode(holding.currency) ? holding.currency : "USD",
   };
@@ -182,6 +190,11 @@ export function HoldingForm({
       case "indian_mf":
       case "ulip":
         return "Units";
+      case "other":
+        if (form.ticker === "BTC") return "How much BTC";
+        if (form.ticker === "ETH") return "How much ETH";
+        if (form.ticker === "CRYPTO") return "How many coins";
+        return "Quantity / units";
       case "bank":
         return "Balance (₹)";
       default:
@@ -194,6 +207,11 @@ export function HoldingForm({
       case "indian_mf":
       case "ulip":
         return "Average NAV";
+      case "other":
+        if (form.ticker === "BTC" || form.ticker === "ETH" || form.ticker === "CRYPTO") {
+          return "Average buy price per coin (₹)";
+        }
+        return "Average buy price (₹)";
       case "physical_gold":
         return "Buy price per gram (₹)";
       case "us_stock":
@@ -240,6 +258,7 @@ export function HoldingForm({
     const quantity = parseAmount(form.quantity);
     const avgPrice = parseAmount(form.avgPrice || "0");
     const manual = form.manualValueInr.trim() ? parseAmount(form.manualValueInr) : undefined;
+    const coin = form.type === "other" ? coinKind(form.ticker) : null;
     if (form.avgPrice && Number.isNaN(avgPrice)) {
       setError("Enter a valid buy price.");
       return;
@@ -268,6 +287,19 @@ export function HoldingForm({
       price = inrPerFx(market, form.fxCode);
       if (!Number.isFinite(costBasisInr) || costBasisInr < 0) costBasisInr = qty * price;
       manualValueInr = undefined;
+    } else if (coin) {
+      if (Number.isNaN(quantity) || quantity <= 0) {
+        setError(coin === "BTC" ? "Enter how much BTC you own." : coin === "ETH" ? "Enter how much ETH you own." : "Enter how many coins you own.");
+        return;
+      }
+      qty = quantity;
+      price = Number.isFinite(avgPrice) && avgPrice > 0 ? avgPrice : 0;
+      costBasisInr = qty * price;
+      if (coin === "CRYPTO" && manual != null && manual > 0) {
+        manualValueInr = qty * manual;
+      } else {
+        manualValueInr = undefined;
+      }
     } else if (isCashLike(form.type)) {
       const amount = parseAmount(form.quantity || form.costBasisInr || form.manualValueInr);
       if (Number.isNaN(amount) || amount <= 0) {
@@ -353,9 +385,14 @@ export function HoldingForm({
     form.type === "usd_cash" && Number.isFinite(fxAmount) && fxAmount > 0
       ? fxAmount * inrPerFx(market, form.fxCode)
       : 0;
+  const coin = form.type === "other" ? coinKind(form.ticker) : null;
   const showLiveNav =
     !manualEntry &&
     (needsTicker(form.type) || form.type === "ulip" || form.type === "physical_gold");
+  const coinQty = coin ? parseAmount(form.quantity) : 0;
+  const coinSpot =
+    coin === "BTC" ? market.btcInr : coin === "ETH" ? (market.quotes.ETH?.price ?? 0) : 0;
+  const coinWorth = coinQty > 0 && coinSpot > 0 ? coinQty * coinSpot : 0;
 
   if (!hasHydrated) {
     return <p className="text-sm text-muted-foreground">Loading your vault…</p>;
@@ -579,7 +616,7 @@ export function HoldingForm({
           </Field>
         ) : null}
 
-        {form.type !== "usd_cash" && isSimpleAmount(form.type) ? (
+        {form.type !== "usd_cash" && isSimpleAmount(form.type) && !coin ? (
           <Field label="Amount (₹)" className="sm:col-span-2">
             <Input
               inputMode="decimal"
@@ -588,14 +625,14 @@ export function HoldingForm({
               placeholder="0"
             />
           </Field>
-        ) : form.type !== "usd_cash" && !isSimpleAmount(form.type) ? (
+        ) : form.type !== "usd_cash" && (!isSimpleAmount(form.type) || coin) ? (
           <>
             <Field label={qtyLabel}>
               <Input
                 inputMode="decimal"
                 value={form.quantity}
                 onChange={(e) => patch({ quantity: e.target.value })}
-                placeholder="0"
+                placeholder={coin === "BTC" ? "0.015" : coin === "ETH" ? "0.42" : "0"}
                 required
               />
             </Field>
@@ -617,7 +654,36 @@ export function HoldingForm({
                 purity={form.purity}
               />
             ) : null}
-            {manualEntry ? (
+            {coin === "BTC" || coin === "ETH" ? (
+              <div className="sm:col-span-2 rounded-md bg-muted px-3 py-3 text-sm">
+                <p className="text-xs text-muted-foreground">
+                  Live {coin === "BTC" ? "Bitcoin" : "Ethereum"}
+                </p>
+                <p className="mt-1 font-medium tabular-nums">
+                  {coinSpot > 0 ? `${formatInr(coinSpot, true)} per coin` : "Price loading…"}
+                </p>
+                {coinWorth > 0 ? (
+                  <p className="mt-1 text-xs text-muted-foreground tabular-nums">
+                    You own {formatInr(coinWorth)}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Type how many coins you hold. Kosha converts that to rupees.
+                  </p>
+                )}
+              </div>
+            ) : null}
+            {coin === "CRYPTO" ? (
+              <Field label="Current price per coin (₹)" className="sm:col-span-2">
+                <Input
+                  inputMode="decimal"
+                  value={form.manualValueInr}
+                  onChange={(e) => patch({ manualValueInr: e.target.value })}
+                  placeholder="What 1 coin is worth today"
+                />
+              </Field>
+            ) : null}
+            {coin ? null : manualEntry ? (
               <Field label="Current value (₹, optional)">
                 <Input
                   inputMode="decimal"

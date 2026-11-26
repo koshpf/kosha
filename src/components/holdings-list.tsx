@@ -12,7 +12,14 @@ import { formatDate, formatDateTime, formatInr, formatQty, relativeTime } from "
 import type { AssetType, HoldingView } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type SortKey = "value" | "pnl" | "name" | "type";
+function formatHoldingQty(row: HoldingView): string {
+  const coin = row.holding.type === "other" ? row.holding.ticker?.toUpperCase() : "";
+  if (coin === "BTC" || coin === "ETH" || coin === "CRYPTO") {
+    const text = row.holding.quantity.toLocaleString("en-IN", { maximumFractionDigits: 8 });
+    return coin === "CRYPTO" ? text : `${text} ${coin}`;
+  }
+  return `${formatQty(row.holding.quantity)}${row.holding.type === "usd_cash" ? ` ${row.holding.currency}` : ""}`;
+}
 
 export function HoldingsList({
   views,
@@ -120,10 +127,7 @@ export function HoldingsList({
                   </p>
                 </td>
                 <td className="px-4 py-3 tabular-nums">
-                  <Hidden>
-                    {formatQty(row.holding.quantity)}
-                    {row.holding.type === "usd_cash" ? ` ${row.holding.currency}` : ""}
-                  </Hidden>
+                  <Hidden>{formatHoldingQty(row)}</Hidden>
                 </td>
                 <td className="px-4 py-3 tabular-nums">
                   <Hidden>{formatInr(row.costBasisInr)}</Hidden>
@@ -174,10 +178,7 @@ export function HoldingsList({
                   {row.holding.ticker ? ` · ${row.holding.ticker}` : ""}
                   {row.holding.type === "usd_cash" ? ` ${row.holding.currency}` : ""}
                   {" · "}
-                  <Hidden>
-                    {formatQty(row.holding.quantity)}
-                    {row.holding.type === "usd_cash" ? ` ${row.holding.currency}` : ""}
-                  </Hidden>
+                  <Hidden>{formatHoldingQty(row)}</Hidden>
                 </p>
                 {row.holding.type === "indian_mf" || row.holding.type === "ulip" ? (
                   <p className="mt-1 text-xs text-muted-foreground">

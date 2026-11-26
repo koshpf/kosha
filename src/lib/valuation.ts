@@ -1,5 +1,6 @@
 import { inrPerFx } from "@/lib/fx";
 import { todayKey } from "@/lib/format";
+import { coinKind, isLegacyRupeeCoin } from "@/lib/other-assets";
 import { mfCode, mfQuoteKey, ulipCode, yahooSymbol } from "@/lib/symbols";
 import { ulipQuoteKey } from "@/lib/ulip-index";
 import type {
@@ -26,6 +27,15 @@ export function investedInr(holding: Holding, market: MarketQuotes): number {
     case "physical_gold":
       if (qty > 0 && avg > 0) return qty * avg;
       return holding.costBasisInr;
+    case "other": {
+      const kind = coinKind(holding.ticker);
+      if ((kind === "BTC" || kind === "ETH" || kind === "CRYPTO") && !isLegacyRupeeCoin(holding)) {
+        if (qty > 0 && avg > 0) return qty * avg;
+      }
+      if (holding.costBasisInr > 0) return holding.costBasisInr;
+      if (qty > 0 && avg > 0) return qty * avg;
+      return 0;
+    }
     case "us_stock":
       if (holding.costBasisInr > 0) return holding.costBasisInr;
       if (qty > 0 && avg > 0) return qty * avg * market.usdInr;
@@ -109,6 +119,31 @@ export function valueHolding(holding: Holding, market: MarketQuotes): HoldingVie
     case "rd":
     case "fd":
     case "other": {
+      const kind = holding.type === "other" ? coinKind(holding.ticker) : null;
+      if ((kind === "BTC" || kind === "ETH") && !isLegacyRupeeCoin(holding)) {
+        const spot = kind === "BTC" ? market.btcInr : (market.quotes.ETH?.price ?? 0);
+        if (spot > 0) {
+          quoted = true;
+          pricePerUnit = spot;
+          priceCurrency = "INR";
+          currentValueInr = holding.quantity * spot;
+          break;
+        }
+      }
+      if (kind === "CRYPTO" && !isLegacyRupeeCoin(holding)) {
+        if (holding.manualValueInr != null && holding.manualValueInr > 0) {
+          currentValueInr = holding.manualValueInr;
+          pricePerUnit = holding.quantity > 0 ? holding.manualValueInr / holding.quantity : null;
+          priceCurrency = "INR";
+          break;
+        }
+        if (holding.quantity > 0 && holding.avgPrice > 0) {
+          currentValueInr = holding.quantity * holding.avgPrice;
+          pricePerUnit = holding.avgPrice;
+          priceCurrency = "INR";
+          break;
+        }
+      }
       currentValueInr =
         holding.manualValueInr ??
         (holding.quantity > 0 && holding.avgPrice > 0

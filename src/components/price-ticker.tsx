@@ -26,6 +26,15 @@ export function PriceTicker({
           BTC {formatInr(market.btcInr)}
           <span className="text-muted-foreground"> · {formatUsd(market.btcUsd)}</span>
         </span>
+        {market.quotes.ETH?.price ? (
+          <span>
+            ETH {formatInr(market.quotes.ETH.price)}
+            <span className="text-muted-foreground">
+              {" "}
+              · {formatUsd(market.usdInr > 0 ? market.quotes.ETH.price / market.usdInr : 0)}
+            </span>
+          </span>
+        ) : null}
         <span>USD {formatInr(market.usdInr, true)}</span>
       </div>
       <div className="flex items-center gap-3">

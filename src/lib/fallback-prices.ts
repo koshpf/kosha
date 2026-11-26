@@ -23,6 +23,7 @@ export const FALLBACK_MARKET: MarketQuotes = {
     "MF:122639": { price: 91.22, prevClose: 90.84, currency: "INR", name: "Parag Parikh Flexi Cap Direct Growth" },
     "MF:120716": { price: 168.4, prevClose: 167.9, currency: "INR", name: "UTI Nifty 50 Index Direct Growth" },
     "MF:152889": { price: 10.08, prevClose: 10.14, currency: "INR", name: "HDFC NIFTY LargeMidcap 250 Index Direct Growth" },
+    ETH: { price: 246_000, currency: "INR", name: "Ethereum" },
   },
   live: { fx: false, gold: false, btc: false },
   usedDemo: true,

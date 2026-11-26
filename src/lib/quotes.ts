@@ -74,24 +74,29 @@ async function fetchFxTable(): Promise<Record<string, number> | null> {
   ]);
 }
 
-async function fetchBtc(): Promise<{ inr: number; usd: number } | null> {
+async function fetchSpotUsd(pair: "BTC-USD" | "ETH-USD", min: number, max: number): Promise<number | null> {
   return firstOk([
     async () => {
       const data = await fetchJson<{ data?: { amount?: string } }>(
-        "https://api.coinbase.com/v2/prices/BTC-USD/spot",
+        `https://api.coinbase.com/v2/prices/${pair}/spot`,
         2500,
       );
       const usd = Number(data.data?.amount);
-      if (!Number.isFinite(usd) || usd < 20_000 || usd > 500_000) throw new Error("bad coinbase");
-      return { usd, inr: 0 };
+      if (!Number.isFinite(usd) || usd < min || usd > max) throw new Error(`bad ${pair}`);
+      return usd;
     },
     async () => {
-      const quote = await fetchYahoo("BTC-USD");
+      const quote = await fetchYahoo(pair);
       const usd = quote?.price;
-      if (!usd || usd < 20_000 || usd > 500_000) throw new Error("bad yahoo btc");
-      return { usd, inr: 0 };
+      if (!usd || usd < min || usd > max) throw new Error(`bad yahoo ${pair}`);
+      return usd;
     },
   ]);
+}
+
+async function fetchBtc(): Promise<{ inr: number; usd: number } | null> {
+  const usd = await fetchSpotUsd("BTC-USD", 20_000, 500_000);
+  return usd ? { usd, inr: 0 } : null;
 }
 
 function mcxGoldExpiryDates(): string[] {
@@ -373,8 +378,8 @@ export const fetchMarketQuotes = createServerFn({ method: "POST" })
     ulip: Array.isArray(data.ulip) ? data.ulip.slice(0, 12).map(String) : [],
   }))
   .handler(async ({ data }): Promise<MarketQuotes> => {
-    const yahooSymbols = [...new Set([...data.yahoo, "BTC-USD", "BTC-INR"])];
-    const [fxTable, indiaGold, goldOz, yahooMap, mfQuotes, coinbaseBtc] = await Promise.all([
+    const yahooSymbols = [...new Set([...data.yahoo, "BTC-USD", "BTC-INR", "ETH-USD", "ETH-INR"])];
+    const [fxTable, indiaGold, goldOz, yahooMap, mfQuotes, coinbaseBtc, ethUsdLive] = await Promise.all([
       fetchFxTable(),
       fetchIndiaGoldPerGram24k(),
       fetchGoldUsdPerOz(),
@@ -384,6 +389,7 @@ export const fetchMarketQuotes = createServerFn({ method: "POST" })
         quote: await fetchMf(code),
       })),
       fetchBtc(),
+      fetchSpotUsd("ETH-USD", 200, 100_000),
     ]);
     const ulipQuotes = data.ulip.length
       ? await Promise.race([
@@ -399,6 +405,8 @@ export const fetchMarketQuotes = createServerFn({ method: "POST" })
 
     const btcUsdLive = yahooMap["BTC-USD"]?.price ?? coinbaseBtc?.usd ?? null;
     const btcInrLive = yahooMap["BTC-INR"]?.price ?? null;
+    const ethUsd = yahooMap["ETH-USD"]?.price ?? ethUsdLive ?? null;
+    const ethInrLive = yahooMap["ETH-INR"]?.price ?? null;
     const usdInr =
       fxTable?.USD ??
       (btcUsdLive && btcInrLive && btcUsdLive > 0 ? btcInrLive / btcUsdLive : FALLBACK_MARKET.usdInr);
@@ -431,8 +439,17 @@ export const fetchMarketQuotes = createServerFn({ method: "POST" })
     const btcLive = btcUsdLive != null || btcInrLive != null;
 
     const quotes: Record<string, Quote> = { ...FALLBACK_MARKET.quotes };
+    const ethInr =
+      ethInrLive && ethInrLive > 1_000
+        ? ethInrLive
+        : ethUsd && usdInr > 0
+          ? ethUsd * usdInr
+          : (FALLBACK_MARKET.quotes.ETH?.price ?? 0);
+    if (ethInr > 0) {
+      quotes.ETH = { price: ethInr, currency: "INR", name: "Ethereum" };
+    }
     for (const [symbol, quote] of Object.entries(yahooMap)) {
-      if (symbol === "BTC-USD" || symbol === "BTC-INR") continue;
+      if (symbol === "BTC-USD" || symbol === "BTC-INR" || symbol === "ETH-USD" || symbol === "ETH-INR") continue;
       quotes[symbol] = quote;
     }
     for (const row of mfQuotes) {
