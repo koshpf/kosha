@@ -105,7 +105,7 @@ export const ASSET_TYPES: AssetTypeMeta[] = [
     id: "other",
     label: "Other",
     shortLabel: "Other",
-    hint: "PPF, NPS, crypto, property",
+    hint: "PPF, NPS, property — or use Bitcoin / Ethereum above",
     group: "Other",
     quoted: false,
     manual: true,

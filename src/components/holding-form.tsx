@@ -33,11 +33,12 @@ type FormState = {
   fxCode: FxCode;
 };
 
-function emptyForm(type: AssetType = "indian_stock"): FormState {
+function emptyForm(type: AssetType = "indian_stock", coin?: "BTC" | "ETH" | "CRYPTO"): FormState {
+  const coinRow = coin ? otherAssetById(coin) : undefined;
   return {
-    name: defaultName(type),
+    name: coinRow?.label ?? defaultName(type),
     type,
-    ticker: "",
+    ticker: coin ?? "",
     exchange: type === "us_stock" ? "US" : "NSE",
     quantity: "",
     avgPrice: "",
@@ -141,6 +142,26 @@ export function TypePicker() {
       </form>
 
       <p className="mb-3 text-sm font-medium">Or tap a type</p>
+      <p className="mb-3 text-sm font-medium">Crypto — enter how many coins you own</p>
+      <div className="mb-6 grid grid-cols-2 gap-2">
+        <Link
+          to="/holdings/new"
+          search={{ type: "other", coin: "BTC" }}
+          className="flex min-h-16 touch-manipulation cursor-pointer flex-col justify-center rounded-md bg-muted px-3 py-3 text-left text-sm text-foreground no-underline active:bg-border"
+        >
+          <span className="block font-medium">Bitcoin</span>
+          <span className="mt-0.5 block text-xs text-muted-foreground">How much BTC you own</span>
+        </Link>
+        <Link
+          to="/holdings/new"
+          search={{ type: "other", coin: "ETH" }}
+          className="flex min-h-16 touch-manipulation cursor-pointer flex-col justify-center rounded-md bg-muted px-3 py-3 text-left text-sm text-foreground no-underline active:bg-border"
+        >
+          <span className="block font-medium">Ethereum</span>
+          <span className="mt-0.5 block text-xs text-muted-foreground">How much ETH you own</span>
+        </Link>
+      </div>
+      <p className="mb-3 text-sm font-medium">Or tap a type</p>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {ASSET_TYPES.map((item) => (
           <Link
@@ -161,16 +182,18 @@ export function TypePicker() {
 export function HoldingForm({
   existing,
   initialType,
+  initialCoin,
 }: {
   existing?: Holding;
   initialType?: AssetType;
+  initialCoin?: "BTC" | "ETH" | "CRYPTO";
 }) {
   const navigate = useNavigate();
   const addHolding = usePortfolio((s) => s.addHolding);
   const updateHolding = usePortfolio((s) => s.updateHolding);
   const hasHydrated = usePortfolio((s) => s.hasHydrated);
   const [form, setForm] = useState<FormState>(
-    existing ? fromHolding(existing) : emptyForm(initialType ?? "indian_stock"),
+    existing ? fromHolding(existing) : emptyForm(initialType ?? "indian_stock", initialCoin),
   );
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);

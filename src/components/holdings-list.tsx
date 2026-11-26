@@ -12,6 +12,8 @@ import { formatDate, formatDateTime, formatInr, formatQty, relativeTime } from "
 import type { AssetType, HoldingView } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+type SortKey = "value" | "pnl" | "name" | "type";
+
 function formatHoldingQty(row: HoldingView): string {
   const coin = row.holding.type === "other" ? row.holding.ticker?.toUpperCase() : "";
   if (coin === "BTC" || coin === "ETH" || coin === "CRYPTO") {
